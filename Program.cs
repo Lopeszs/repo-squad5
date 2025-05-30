@@ -20,12 +20,21 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Configuração CORS para permitir acesso de qualquer origem
+// Configuração CORS para permitir o React e o Swagger
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    // Política para o React
+    options.AddPolicy("ReactApp", builder =>
     {
-        builder.AllowAnyOrigin()
+        builder.WithOrigins("http://localhost:3000")
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+
+    // Política para o Swagger e desenvolvimento local
+    options.AddPolicy("AllowLocalhost", builder =>
+    {
+        builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
                .AllowAnyMethod()
                .AllowAnyHeader();
     });
@@ -42,18 +51,23 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Student Profile API v1");
         c.RoutePrefix = "swagger";
     });
+    
+    // Em desenvolvimento, permite qualquer origem localhost
+    app.UseCors("AllowLocalhost");
 }
-
-// Sempre habilitar Swagger em qualquer ambiente
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+else
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Student Profile API v1");
-    c.RoutePrefix = "swagger";
-});
-
-// Habilita CORS
-app.UseCors("AllowAll");
+    // Em produção, usa a política restritiva para o React
+    app.UseCors("ReactApp");
+    
+    // Ainda habilita Swagger em produção
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Student Profile API v1");
+        c.RoutePrefix = "swagger";
+    });
+}
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
@@ -62,14 +76,6 @@ app.MapControllers();
 // Adiciona uma rota padrão para redirecionar para o Swagger
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
-// Adiciona uma rota minimal API para obter o curso de um estudante
-app.MapGet("/api/students/{id:int}/course/minimal", (int id, StudentService service) =>
-{
-    var student = service.GetStudentById(id);
-    if (student == null)
-        return Results.NotFound("Estudante não encontrado");
-    
-    return Results.Ok(new { course = student.Course });
-});
+
 
 app.Run();
