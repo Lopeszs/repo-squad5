@@ -1,8 +1,10 @@
 import React from 'react';
 
 function StudentList({ students }) {
+  // The className "student-list-container" is applied in App.js to the div wrapping this component.
+  // Styles for h2 and table within .student-list-container are in App.css.
   return (
-    <div className="list">
+    <>
       <h2>Lista de Alunos</h2>
       <table>
         <thead>
@@ -28,7 +30,7 @@ function StudentList({ students }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </>
   );
 }
 

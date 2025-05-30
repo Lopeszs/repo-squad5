@@ -7,17 +7,32 @@ function App() {
   const [students, setStudents] = useState([
     { id: 1, sobrenome: 'Silva', nome: 'João', idade: 20, curso: 'Ciência da Computação', ano: '3º' },
     { id: 2, sobrenome: 'Santos', nome: 'Maria', idade: 22, curso: 'Engenharia Civil', ano: '4º' },
-    { id: 3, sobrenome: 'Oliveira', nome: 'Claudia', idade: 21, curso: 'Medicina', ano: '3º' },
-    { id: 4, sobrenome: 'Souza', nome: 'Paulo', idade: 22, curso: 'Direito', ano: '5º' },
+    { id: 4, sobrenome: 'Oliveira', nome: 'Claudia', idade: 21, curso: 'Medicina', ano: '3º' }, // ID updated to 4 as per image
+    { id: 5, sobrenome: 'Souza', nome: 'Paulo', idade: 22, curso: 'Direito', ano: '5º' },   // ID updated to 5 as per image
   ]);
 
+  // TODO: Implement add, update, delete, clear functions here
+  // const addStudent = (student) => { ... };
+  // const updateStudent = (student) => { ... };
+  // const deleteStudent = (id) => { ... };
+  // const clearForm = () => { ... };
+
   return (
-    <div className="container">
-      <h1>Sistema de Perfil de Estudantes</h1>
-      <div className="main">
-        <StudentForm setStudents={setStudents} students={students} />
-        <StudentList students={students} />
-      </div>
+    <div className="app-container">
+      <header className="app-header">
+        <h1>Perfil de Estudantes</h1>
+      </header>
+      <main className="app-main-content">
+        <div className="student-form-container">
+          <StudentForm setStudents={setStudents} students={students} />
+        </div>
+        <div className="student-list-container">
+          <StudentList students={students} />
+        </div>
+      </main>
+      <footer className="app-footer">
+        <p>Sistema de Perfil de Estudantes - Migrado de VB6 para Web</p>
+      </footer>
     </div>
   );
 }
