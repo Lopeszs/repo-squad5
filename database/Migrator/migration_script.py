@@ -1,8 +1,18 @@
+import sys
+import os
 import pyodbc
 import sqlite3
-import os
-from . import config
-from . import cleaning_rules
+
+# Ajustar o sys.path para garantir que os imports funcionem
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+try:
+    import config
+    import cleaning_rules
+except ImportError as e:
+    print(f"Erro ao importar módulos: {e}")
+    print("Certifique-se de que config.py e cleaning_rules.py estão no diretório database/Migrator/")
+    sys.exit(1)
 
 def migrate_and_clean_students():
     """
@@ -22,7 +32,6 @@ def migrate_and_clean_students():
         print(f"Conectado ao banco de dados Access: {config.ACCESS_DB_PATH}")
 
         # 2. Conectar (ou criar) o banco de dados SQLite
-        # Se o arquivo SQLite já existe, ele será sobrescrito ou apagado para garantir uma base limpa
         if os.path.exists(config.SQLITE_DB_PATH):
             os.remove(config.SQLITE_DB_PATH)
             print(f"Arquivo SQLite existente removido: {config.SQLITE_DB_PATH}")
@@ -31,7 +40,7 @@ def migrate_and_clean_students():
         sqlite_cursor = sqlite_conn.cursor()
         print(f"Banco de dados SQLite criado/aberto em: {config.SQLITE_DB_PATH}")
 
-        # 3. Criar a tabela Students no SQLite com os tipos de dados corretos
+        # 3. Criar a tabela Students no SQLite
         sqlite_cursor.execute("""
             CREATE TABLE IF NOT EXISTS Students (
                 StudentID TEXT PRIMARY KEY,
@@ -53,7 +62,6 @@ def migrate_and_clean_students():
         inserted_count = 0
         skipped_count = 0
 
-        # Usar enumerate para obter o índice da linha
         for i, row in enumerate(rows):
             original_student_id = row.StudentID
             
@@ -62,15 +70,13 @@ def migrate_and_clean_students():
             cleaned_last_name = cleaning_rules.format_name(row.LastName)
             cleaned_first_name = cleaning_rules.format_name(row.FirstName)
             cleaned_age = cleaning_rules.validate_age(row.Age)
-            # Passar o índice da linha para a função standardize_course
             standardized_course = cleaning_rules.standardize_course(row.Course, i)
             standardized_year = cleaning_rules.standardize_year(row.Year)
 
-            # Verificar se o StudentID limpo é válido para inserção como PRIMARY KEY
             if cleaned_student_id is None:
                 print(f"Pulando registro com StudentID original '{original_student_id}' (linha {i+1}) devido a ID inválido após limpeza.")
                 skipped_count += 1
-                continue # Pula este registro se o StudentID for inválida
+                continue
 
             try:
                 sqlite_cursor.execute("""
@@ -108,14 +114,12 @@ def migrate_and_clean_students():
 if __name__ == "__main__":
     print("--- Iniciando o processo de migração e limpeza ---")
     
-    # Exemplo: Testar se o arquivo Access existe antes de tentar migrar
     if not os.path.exists(config.ACCESS_DB_PATH):
         print(f"ERRO: Arquivo Access não encontrado em '{config.ACCESS_DB_PATH}'.")
         print("Por favor, crie o arquivo Access ou ajuste o caminho em database/Migrator/config.py.")
     else:
         migrate_and_clean_students()
 
-    # Opcional: Verificar os dados no SQLite após a migração
     print("\n--- Verificando os primeiros 10 registros no SQLite após a migração ---")
     try:
         check_conn_sqlite = sqlite3.connect(config.SQLITE_DB_PATH)
