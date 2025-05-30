@@ -1,0 +1,60 @@
+# Arquivos de compilação
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# Arquivos de configuração com dados sensíveis
+appsettings.*.json
+!appsettings.Example.json
+*.user
+*.userosscache
+*.suo
+
+# Arquivos de IDE
+.vs/
+.vscode/
+*.rsuser
+*_i.c
+*_p.c
+*.ncb
+*.sdf
+*.opensdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# Arquivos de logs
+*.log
+logs/
+
+# Arquivos de certificados e chaves
+*.pfx
+*.key
+*.pem
+*.crt
+*.cer
+
+# Arquivos de banco de dados local
+*.mdf
+*.ldf
+*.ndf
+*.sqlite
+*.db
+
+# Pacotes NuGet
+*.nupkg
+**/packages/*
+!**/packages/build/
+
+# Arquivos temporários
+[Tt]emp/
+[Tt]mp/
+.DS_Store
+Thumbs.db
