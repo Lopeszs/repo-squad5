@@ -1,18 +1,10 @@
-import sys
-import os
+# database/Migrator/migration_script.py
+
 import pyodbc
 import sqlite3
-
-# Ajustar o sys.path para garantir que os imports funcionem
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-try:
-    import config
-    import cleaning_rules
-except ImportError as e:
-    print(f"Erro ao importar módulos: {e}")
-    print("Certifique-se de que config.py e cleaning_rules.py estão no diretório database/Migrator/")
-    sys.exit(1)
+import os
+from . import config
+from . import cleaning_rules
 
 def migrate_and_clean_students():
     """
