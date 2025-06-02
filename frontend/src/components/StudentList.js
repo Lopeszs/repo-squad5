@@ -1,34 +1,46 @@
 import React from 'react';
+import {
+  ListContainer,
+  ListTitle,
+  StyledTable,
+  TableHeader,
+  TableCell,
+  TableRow
+} from './StudentList.styles';
 
-function StudentList({ students }) {
+function StudentList({ students, setSelectedStudent }) {
+  const handleRowClick = (student) => {
+    setSelectedStudent(student);
+  };
+
   return (
-    <div className="list">
-      <h2>Lista de Alunos</h2>
-      <table>
+    <ListContainer>
+      <ListTitle>Lista de Alunos</ListTitle>
+      <StyledTable>
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Sobrenome</th>
-            <th>Nome</th>
-            <th>Idade</th>
-            <th>Curso</th>
-            <th>Ano</th>
+            <TableHeader>ID</TableHeader>
+            <TableHeader>Sobrenome</TableHeader>
+            <TableHeader>Nome</TableHeader>
+            <TableHeader>Idade</TableHeader>
+            <TableHeader>Curso</TableHeader>
+            <TableHeader>Ano</TableHeader>
           </tr>
         </thead>
         <tbody>
           {students.map((s) => (
-            <tr key={s.id}>
-              <td>{s.id}</td>
-              <td>{s.sobrenome}</td>
-              <td>{s.nome}</td>
-              <td>{s.idade}</td>
-              <td>{s.curso}</td>
-              <td>{s.ano}</td>
-            </tr>
+            <TableRow key={s.id} onClick={() => handleRowClick(s)}>
+              <TableCell>{s.id}</TableCell>
+              <TableCell>{s.sobrenome}</TableCell>
+              <TableCell>{s.nome}</TableCell>
+              <TableCell>{s.idade}</TableCell>
+              <TableCell>{s.curso}</TableCell>
+              <TableCell>{s.ano}</TableCell>
+            </TableRow>
           ))}
         </tbody>
-      </table>
-    </div>
+      </StyledTable>
+    </ListContainer>
   );
 }
 
