@@ -1,15 +1,13 @@
 # database/Migrator/migration_script.py
-
 import pyodbc
 import sqlite3
 import os
 from . import config
-from . import cleaning_rules
 
-def migrate_and_clean_students():
+def migrate_raw_students():
     """
-    Lê dados da tabela 'Students' do Access, limpa, padroniza e os insere
-    em uma nova tabela 'Students' no SQLite.
+    Lê dados da tabela 'Students' do Access e os insere diretamente
+    em uma nova tabela 'Students' no SQLite, sem tratamento.
     """
     access_conn = None
     sqlite_conn = None
@@ -24,27 +22,28 @@ def migrate_and_clean_students():
         print(f"Conectado ao banco de dados Access: {config.ACCESS_DB_PATH}")
 
         # 2. Conectar (ou criar) o banco de dados SQLite
-        if os.path.exists(config.SQLITE_DB_PATH):
-            os.remove(config.SQLITE_DB_PATH)
-            print(f"Arquivo SQLite existente removido: {config.SQLITE_DB_PATH}")
+        raw_sqlite_db_path = os.path.join(config.SQLITE_DB_FOLDER, 'students_raw.db')
+        if os.path.exists(raw_sqlite_db_path):
+            os.remove(raw_sqlite_db_path)
+            print(f"Arquivo SQLite existente (raw) removido: {raw_sqlite_db_path}")
 
-        sqlite_conn = sqlite3.connect(config.SQLITE_DB_PATH)
+        sqlite_conn = sqlite3.connect(raw_sqlite_db_path) # Usar o novo caminho
         sqlite_cursor = sqlite_conn.cursor()
-        print(f"Banco de dados SQLite criado/aberto em: {config.SQLITE_DB_PATH}")
+        print(f"Banco de dados SQLite (raw) criado/aberto em: {raw_sqlite_db_path}")
 
         # 3. Criar a tabela Students no SQLite
         sqlite_cursor.execute("""
             CREATE TABLE IF NOT EXISTS Students (
                 StudentID TEXT PRIMARY KEY,
-                LastName TEXT,
-                FirstName TEXT,
-                Age INTEGER,
-                Course TEXT,
-                Year TEXT
+                LastName TEXT NOT NULL,
+                FirstName TEXT NOT NULL,
+                Age INTEGER NOT NULL,
+                Course TEXT NOT NULL,
+                Year TEXT NOT NULL
             )
         """)
         sqlite_conn.commit()
-        print("Tabela 'Students' criada no SQLite.")
+        print("Tabela 'Students' (raw) criada no SQLite.")
 
         # 4. Ler dados do Access e inserir no SQLite
         access_cursor.execute("SELECT StudentID, LastName, FirstName, Age, Course, Year FROM Students")
@@ -55,37 +54,31 @@ def migrate_and_clean_students():
         skipped_count = 0
 
         for i, row in enumerate(rows):
-            original_student_id = row.StudentID
-            
-            # Aplicar funções de limpeza e padronização
-            cleaned_student_id = cleaning_rules.clean_student_id(row.StudentID)
-            cleaned_last_name = cleaning_rules.format_name(row.LastName)
-            cleaned_first_name = cleaning_rules.format_name(row.FirstName)
-            cleaned_age = cleaning_rules.validate_age(row.Age)
-            standardized_course = cleaning_rules.standardize_course(row.Course, i)
-            standardized_year = cleaning_rules.standardize_year(row.Year)
-
-            if cleaned_student_id is None:
-                print(f"Pulando registro com StudentID original '{original_student_id}' (linha {i+1}) devido a ID inválido após limpeza.")
-                skipped_count += 1
-                continue
+            # Apenas pegue os dados diretamente da linha do Access
+            raw_student_id = row.StudentID
+            raw_last_name = row.LastName
+            raw_first_name = row.FirstName
+            raw_age = row.Age
+            raw_course = row.Course
+            raw_year = row.Year
 
             try:
                 sqlite_cursor.execute("""
                     INSERT INTO Students (StudentID, LastName, FirstName, Age, Course, Year)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (cleaned_student_id, cleaned_last_name, cleaned_first_name,
-                      cleaned_age, standardized_course, standardized_year))
+                """, (raw_student_id, raw_last_name, raw_first_name,
+                      raw_age, raw_course, raw_year))
                 inserted_count += 1
             except sqlite3.IntegrityError:
-                print(f"Aviso: StudentID '{cleaned_student_id}' (linha {i+1}) já existe no SQLite. Pulando este registro.")
+                # Se o StudentID não for garantido como único no Access, você pode ter duplicatas
+                print(f"Aviso: StudentID '{raw_student_id}' (linha {i+1}) já existe no SQLite (raw). Pulando este registro.")
                 skipped_count += 1
             except Exception as e:
-                print(f"Erro ao inserir o registro com StudentID '{original_student_id}' (linha {i+1}, limpo: '{cleaned_student_id}'): {e}")
+                print(f"Erro ao inserir o registro com StudentID '{raw_student_id}' (linha {i+1}): {e}")
                 skipped_count += 1
 
         sqlite_conn.commit()
-        print(f"\nMigração concluída!")
+        print(f"\nMigração de dados brutos concluída!")
         print(f"Total de registros processados: {len(rows)}")
         print(f"Registros inseridos com sucesso: {inserted_count}")
         print(f"Registros pulados (erros/duplicatas): {skipped_count}")
@@ -101,24 +94,26 @@ def migrate_and_clean_students():
             print("Conexão Access fechada.")
         if sqlite_conn:
             sqlite_conn.close()
-            print("Conexão SQLite fechada.")
+            print("Conexão SQLite (raw) fechada.")
 
 if __name__ == "__main__":
-    print("--- Iniciando o processo de migração e limpeza ---")
-    
+    print("--- Iniciando o processo de migração de dados brutos ---")
+
+    # Mantenha a verificação do arquivo Access
     if not os.path.exists(config.ACCESS_DB_PATH):
         print(f"ERRO: Arquivo Access não encontrado em '{config.ACCESS_DB_PATH}'.")
         print("Por favor, crie o arquivo Access ou ajuste o caminho em database/Migrator/config.py.")
     else:
-        migrate_and_clean_students()
+        migrate_raw_students()
 
-    print("\n--- Verificando os primeiros 10 registros no SQLite após a migração ---")
+    print("\n--- Verificando os primeiros registros no SQLite (raw) após a migração ---")
     try:
-        check_conn_sqlite = sqlite3.connect(config.SQLITE_DB_PATH)
+        raw_sqlite_db_path = os.path.join(config.SQLITE_DB_FOLDER, 'students_raw.db')
+        check_conn_sqlite = sqlite3.connect(raw_sqlite_db_path)
         check_cursor_sqlite = check_conn_sqlite.cursor()
         check_cursor_sqlite.execute("SELECT StudentID, LastName, FirstName, Age, Course, Year FROM Students LIMIT 10")
         for row in check_cursor_sqlite.fetchall():
             print(row)
         check_conn_sqlite.close()
     except Exception as e:
-        print(f"Erro ao verificar dados no SQLite: {e}")
+        print(f"Erro ao verificar dados no SQLite (raw): {e}")
