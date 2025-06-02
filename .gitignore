@@ -4,11 +4,19 @@ node_modules/
 # arquivos de build
 build/
 dist/
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
 
 # arquivos de log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
+logs/
 
 # ambiente
 .env
@@ -20,8 +28,22 @@ yarn-error.log*
 # diretórios do editor
 .idea/
 .vscode/
+.vs/
 *.sublime-project
 *.sublime-workspace
+*.rsuser
+*_i.c
+*_p.c
+*.ncb
+*.sdf
+*.opensdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+*.psess
+*.vsp
+*.vspx
+*.sap
 
 # sistema operacional
 .DS_Store
@@ -33,3 +55,24 @@ coverage/
 # lockfile opcional (se você usa só yarn ou só npm, ignore o outro)
 package-lock.json
 
+# Arquivos de configuração com dados sensíveis
+appsettings.*.json
+!appsettings.Example.json
+*.user
+*.userosscache
+*.suo
+
+# Arquivos de certificados e chaves
+*.pfx
+*.key
+*.pem
+*.crt
+*.cer
+
+# Arquivos de banco de dados local
+*.mdf
+*.ldf
+*.ndf
+# Não ignorar o banco de dados SQLite para permitir a integração
+# *.sqlite
+# *.db
