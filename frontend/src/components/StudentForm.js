@@ -14,53 +14,102 @@ import {
 } from './StudentForm.styles';
 
 // Zod Schema for validation
+// Updated to match backend (camelCase, studentId as number)
 const studentSchema = z.object({
-  id: z.string().min(1, "ID é obrigatório"), // Assuming ID is a string, can be changed
-  sobrenome: z.string().min(1, "Sobrenome é obrigatório"),
-  nome: z.string().min(1, "Nome é obrigatório"),
-  idade: z.coerce.number().min(1, "Idade é obrigatória").positive("Idade deve ser positiva"),
-  curso: z.string().min(1, "Curso é obrigatório"),
-  ano: z.string().min(1, "Ano é obrigatório"), // e.g., "3º"
+  studentId: z.number().optional(), // studentId is a number and optional
+  lastName: z.string().min(1, "Sobrenome é obrigatório"),
+  firstName: z.string().min(1, "Nome é obrigatório"),
+  age: z.coerce.number().min(1, "Idade é obrigatória").positive("Idade deve ser positiva"),
+  course: z.string().min(1, "Curso é obrigatório"),
+  year: z.string().min(1, "Ano é obrigatório"), // e.g., "3º"
 });
+
+// Helper to map frontend state (selectedStudent) to form data if names differ
+// For now, we assume selectedStudent will also use camelCase from App.js
+const mapToFormDefaults = (student) => {
+  if (!student) return { studentId: undefined, lastName: '', firstName: '', age: '', course: '', year: '' };
+  return {
+    studentId: student.studentId, // Ensure this is number or undefined
+    lastName: student.lastName,
+    firstName: student.firstName,
+    age: student.age,
+    course: student.course,
+    year: student.year,
+  };
+};
+
 
 function StudentForm({ setStudents, students, selectedStudent, setSelectedStudent }) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(studentSchema),
-    defaultValues: selectedStudent || { id: '', sobrenome: '', nome: '', idade: '', curso: '', ano: '' }
+    defaultValues: mapToFormDefaults(selectedStudent)
   });
 
   React.useEffect(() => {
-    if (selectedStudent) {
-      reset(selectedStudent);
-    } else {
-      reset({ id: '', sobrenome: '', nome: '', idade: '', curso: '', ano: '' });
-    }
+    reset(mapToFormDefaults(selectedStudent));
   }, [selectedStudent, reset]);
 
-  const onSubmit = (data) => {
-    if (selectedStudent) {
-      // Update existing student
-      setStudents(students.map(s => s.id === selectedStudent.id ? { ...s, ...data } : s));
-      setSelectedStudent(null); // Clear selection
-    } else {
-      // Add new student - ID generation might need refinement
-      const newId = students.length > 0 ? Math.max(...students.map(s => parseInt(s.id) || 0)) + 1 : 1;
-      setStudents([...students, { ...data, id: String(newId) }]);
+  const onSubmit = async (formData) => { // formData will have camelCase names
+    try {
+      if (selectedStudent && selectedStudent.studentId) { // Check for studentId for update
+        // Update existing student
+        const response = await fetch(`http://localhost:5000/api/Students/${selectedStudent.studentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData), // formData is already in camelCase
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const updatedStudent = await response.json(); // Expects camelCase
+        setStudents(students.map(s => s.studentId === selectedStudent.studentId ? updatedStudent : s));
+        setSelectedStudent(null); // Clear selection
+      } else {
+        // Add new student
+        // studentId should not be in formData or should be undefined
+        const { studentId, ...dataToSend } = formData; // Exclude studentId for POST
+        const response = await fetch('http://localhost:5000/api/Students', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(dataToSend), 
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const newStudent = await response.json(); // Expects camelCase
+        setStudents([...students, newStudent]);
+      }
+      reset(mapToFormDefaults(null));
+    } catch (error) {
+      console.error("Failed to submit student data:", error);
     }
-    reset({ id: '', sobrenome: '', nome: '', idade: '', curso: '', ano: '' });
   };
   
   const handleClear = () => {
-    reset({ id: '', sobrenome: '', nome: '', idade: '', curso: '', ano: '' });
-    setSelectedStudent(null); // Clear selection if any
+    reset(mapToFormDefaults(null));
+    setSelectedStudent(null); 
   };
 
-  // TODO: Implement handleDelete
-  const handleDelete = () => {
-    if (selectedStudent) {
-      setStudents(students.filter(s => s.id !== selectedStudent.id));
-      setSelectedStudent(null);
-      reset({ id: '', sobrenome: '', nome: '', idade: '', curso: '', ano: '' });
+  const handleDelete = async () => {
+    if (selectedStudent && selectedStudent.studentId) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/Students/${selectedStudent.studentId}`, {
+          method: 'DELETE',
+        });
+        if (response.status !== 204 && !response.ok) { // Check for 204 or other ok statuses
+           throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        setStudents(students.filter(s => s.studentId !== selectedStudent.studentId));
+        setSelectedStudent(null);
+        reset(mapToFormDefaults(null));
+      } catch (error) {
+        console.error("Failed to delete student:", error);
+        // Optionally, set an error state here to display to the user
+      }
     }
   };
 
@@ -70,65 +119,65 @@ function StudentForm({ setStudents, students, selectedStudent, setSelectedStuden
       <FormTitle>Cadastro de Aluno</FormTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FormGroup>
-          <Label htmlFor="id">ID do Aluno:</Label>
+          <Label htmlFor="studentId">ID do Aluno:</Label>
           <Input
-            type="text"
-            id="id"
-            {...register("id")}
-            placeholder="ID do Aluno"
-            disabled={!!selectedStudent} // Disable ID field when editing
+            type="text" // Keep as text for display, Zod coerces to number
+            id="studentId"
+            {...register("studentId")}
+            placeholder="ID (gerado automaticamente)"
+            disabled // ID is always disabled, generated by backend or shown for selected
           />
-          {errors.id && <ErrorMessage>{errors.id.message}</ErrorMessage>}
+          {/* No error message for studentId as it's not user-editable */}
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="sobrenome">Sobrenome:</Label>
+          <Label htmlFor="lastName">Sobrenome:</Label>
           <Input
             type="text"
-            id="sobrenome"
-            {...register("sobrenome")}
+            id="lastName"
+            {...register("lastName")}
             placeholder="Sobrenome"
           />
-          {errors.sobrenome && <ErrorMessage>{errors.sobrenome.message}</ErrorMessage>}
+          {errors.lastName && <ErrorMessage>{errors.lastName.message}</ErrorMessage>}
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="nome">Nome:</Label>
+          <Label htmlFor="firstName">Nome:</Label>
           <Input
             type="text"
-            id="nome"
-            {...register("nome")}
+            id="firstName"
+            {...register("firstName")}
             placeholder="Nome"
           />
-          {errors.nome && <ErrorMessage>{errors.nome.message}</ErrorMessage>}
+          {errors.firstName && <ErrorMessage>{errors.firstName.message}</ErrorMessage>}
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="idade">Idade:</Label>
+          <Label htmlFor="age">Idade:</Label>
           <Input
             type="number"
-            id="idade"
-            {...register("idade")}
+            id="age"
+            {...register("age")}
             placeholder="Idade"
           />
-          {errors.idade && <ErrorMessage>{errors.idade.message}</ErrorMessage>}
+          {errors.age && <ErrorMessage>{errors.age.message}</ErrorMessage>}
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="curso">Curso:</Label>
+          <Label htmlFor="course">Curso:</Label>
           <Input
             type="text"
-            id="curso"
-            {...register("curso")}
+            id="course"
+            {...register("course")}
             placeholder="Curso"
           />
-          {errors.curso && <ErrorMessage>{errors.curso.message}</ErrorMessage>}
+          {errors.course && <ErrorMessage>{errors.course.message}</ErrorMessage>}
         </FormGroup>
         <FormGroup>
-          <Label htmlFor="ano">Ano:</Label>
+          <Label htmlFor="year">Ano:</Label>
           <Input
             type="text"
-            id="ano"
-            {...register("ano")}
+            id="year"
+            {...register("year")}
             placeholder="Ano"
           />
-          {errors.ano && <ErrorMessage>{errors.ano.message}</ErrorMessage>}
+          {errors.year && <ErrorMessage>{errors.year.message}</ErrorMessage>}
         </FormGroup>
         <ButtonContainer>
           <Button type="submit" className={selectedStudent ? "btn-save" : "btn-add"}>

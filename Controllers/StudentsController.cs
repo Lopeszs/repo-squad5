@@ -94,7 +94,12 @@ public class StudentsController : ControllerBase
         try
         {
             _studentService.UpdateStudent(student);
-            return NoContent();
+            var updatedStudent = _studentService.GetStudentById(id); // Fetch the updated student
+            if (updatedStudent == null)
+            {
+                return NotFound("Student not found after update."); // Should not happen if update was successful
+            }
+            return Ok(updatedStudent); // Return the updated student
         }
         catch (ArgumentException ex)
         {

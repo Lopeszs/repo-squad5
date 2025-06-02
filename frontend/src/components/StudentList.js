@@ -28,14 +28,14 @@ function StudentList({ students, setSelectedStudent }) {
           </tr>
         </thead>
         <tbody>
-          {students.map((s) => (
-            <TableRow key={s.id} onClick={() => handleRowClick(s)}>
-              <TableCell>{s.id}</TableCell>
-              <TableCell>{s.sobrenome}</TableCell>
-              <TableCell>{s.nome}</TableCell>
-              <TableCell>{s.idade}</TableCell>
-              <TableCell>{s.curso}</TableCell>
-              <TableCell>{s.ano}</TableCell>
+          {students.map((student) => (
+            <TableRow key={student.studentId} onClick={() => handleRowClick(student)}>
+              <TableCell>{student.studentId}</TableCell>
+              <TableCell>{student.lastName}</TableCell>
+              <TableCell>{student.firstName}</TableCell>
+              <TableCell>{student.age}</TableCell>
+              <TableCell>{student.course}</TableCell>
+              <TableCell>{student.year}</TableCell>
             </TableRow>
           ))}
         </tbody>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createGlobalStyle } from 'styled-components';
 import StudentForm from './components/StudentForm';
 import StudentList from './components/StudentList';
@@ -20,14 +20,26 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 function App() {
-  const [students, setStudents] = useState([
-    // Ensure IDs are strings to match Zod schema if it expects string IDs
-    { id: '1', sobrenome: 'Silva', nome: 'João', idade: 20, curso: 'Ciência da Computação', ano: '3º' },
-    { id: '2', sobrenome: 'Santos', nome: 'Maria', idade: 22, curso: 'Engenharia Civil', ano: '4º' },
-    { id: '4', sobrenome: 'Oliveira', nome: 'Claudia', idade: 21, curso: 'Medicina', ano: '3º' },
-    { id: '5', sobrenome: 'Souza', nome: 'Paulo', idade: 22, curso: 'Direito', ano: '5º' },
-  ]);
+  const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/Students');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setStudents(data);
+      } catch (error) {
+        console.error("Failed to fetch students:", error);
+        // Optionally, set an error state here to display to the user
+      }
+    };
+
+    fetchStudents();
+  }, []);
 
 
   return (
