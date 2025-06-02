@@ -30,15 +30,24 @@ public class StudentRepository
                 {
                     while (reader.Read())
                     {
-                        students.Add(new Student
+                        try
                         {
-                            StudentID = reader.GetInt32(0),
-                            LastName = reader.GetString(1),
-                            FirstName = reader.GetString(2),
-                            Age = reader.GetInt32(3),
-                            Course = reader.GetString(4),
-                            Year = reader.GetString(5)
-                        });
+                            students.Add(new Student
+                            {
+                                // Convertendo StudentID de TEXT para int
+                                StudentID = int.Parse(reader.GetString(0)),
+                                LastName = reader.GetString(1),
+                                FirstName = reader.GetString(2),
+                                Age = reader.GetInt32(3),
+                                Course = reader.GetString(4),
+                                Year = reader.GetString(5)
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log do erro e continua para o próximo registro
+                            Console.WriteLine($"Erro ao converter registro: {ex.Message}");
+                        }
                     }
                 }
             }
@@ -56,21 +65,29 @@ public class StudentRepository
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT StudentID, LastName, FirstName, Age, Course, Year FROM Students WHERE StudentID = @id";
-                command.Parameters.AddWithValue("@id", id);
+                command.Parameters.AddWithValue("@id", id.ToString()); // Convertendo para string
 
                 using (var reader = command.ExecuteReader())
                 {
                     if (reader.Read())
                     {
-                        return new Student
+                        try
                         {
-                            StudentID = reader.GetInt32(0),
-                            LastName = reader.GetString(1),
-                            FirstName = reader.GetString(2),
-                            Age = reader.GetInt32(3),
-                            Course = reader.GetString(4),
-                            Year = reader.GetString(5)
-                        };
+                            return new Student
+                            {
+                                StudentID = int.Parse(reader.GetString(0)),
+                                LastName = reader.GetString(1),
+                                FirstName = reader.GetString(2),
+                                Age = reader.GetInt32(3),
+                                Course = reader.GetString(4),
+                                Year = reader.GetString(5)
+                            };
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Erro ao converter registro: {ex.Message}");
+                            return null;
+                        }
                     }
                 }
             }
@@ -91,7 +108,7 @@ public class StudentRepository
                     INSERT INTO Students (StudentID, LastName, FirstName, Age, Course, Year)
                     VALUES (@id, @lastName, @firstName, @age, @course, @year)";
 
-                command.Parameters.AddWithValue("@id", student.StudentID);
+                command.Parameters.AddWithValue("@id", student.StudentID.ToString()); // Convertendo para string
                 command.Parameters.AddWithValue("@lastName", student.LastName);
                 command.Parameters.AddWithValue("@firstName", student.FirstName);
                 command.Parameters.AddWithValue("@age", student.Age);
@@ -127,7 +144,7 @@ public class StudentRepository
                         Year = @year
                     WHERE StudentID = @id";
 
-                command.Parameters.AddWithValue("@id", student.StudentID);
+                command.Parameters.AddWithValue("@id", student.StudentID.ToString()); // Convertendo para string
                 command.Parameters.AddWithValue("@lastName", student.LastName);
                 command.Parameters.AddWithValue("@firstName", student.FirstName);
                 command.Parameters.AddWithValue("@age", student.Age);
@@ -152,7 +169,7 @@ public class StudentRepository
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "DELETE FROM Students WHERE StudentID = @id";
-                command.Parameters.AddWithValue("@id", id);
+                command.Parameters.AddWithValue("@id", id.ToString()); // Convertendo para string
 
                 int rowsAffected = command.ExecuteNonQuery();
                 if (rowsAffected == 0)

@@ -18,29 +18,51 @@ public class StudentsController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<Student>> GetAll()
     {
-        return Ok(_studentService.GetAllStudents());
+        try
+        {
+            return Ok(_studentService.GetAllStudents());
+        }
+        catch (Exception ex)
+        {
+            // Retorna detalhes do erro para facilitar a depuração
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
     }
 
     [HttpGet("{id}")]
     public ActionResult<Student> GetById(int id)
     {
-        var student = _studentService.GetStudentById(id);
-        if (student == null)
+        try
         {
-            return NotFound();
+            var student = _studentService.GetStudentById(id);
+            if (student == null)
+            {
+                return NotFound();
+            }
+            return Ok(student);
         }
-        return Ok(student);
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
     }
 
     [HttpGet("{id}/course")]
     public ActionResult<string> GetCourse(int id)
     {
-        var student = _studentService.GetStudentById(id);
-        if (student == null)
+        try
         {
-            return NotFound("Estudante não encontrado");
+            var student = _studentService.GetStudentById(id);
+            if (student == null)
+            {
+                return NotFound("Estudante não encontrado");
+            }
+            return Ok(new { course = student.Course });
         }
-        return Ok(new { course = student.Course });
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erro interno: {ex.Message}");
+        }
     }
 
     [HttpPost]
@@ -57,7 +79,7 @@ public class StudentsController : ControllerBase
         }
         catch (Exception ex)
         {
-            return Conflict(ex.Message);
+            return StatusCode(500, $"Erro interno: {ex.Message}");
         }
     }
 
@@ -80,7 +102,7 @@ public class StudentsController : ControllerBase
         }
         catch (Exception ex)
         {
-            return NotFound(ex.Message);
+            return StatusCode(500, $"Erro interno: {ex.Message}");
         }
     }
 
@@ -92,9 +114,9 @@ public class StudentsController : ControllerBase
             _studentService.DeleteStudent(id);
             return NoContent();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return NotFound();
+            return StatusCode(500, $"Erro interno: {ex.Message}");
         }
     }
 }
