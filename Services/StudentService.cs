@@ -5,11 +5,11 @@ namespace StudentProfile.NET.Services;
 
 public class StudentService
 {
-    private readonly MockStudentRepository _repository;
+    private readonly StudentRepository _repository;
 
-    public StudentService()
+    public StudentService(StudentRepository repository)
     {
-        _repository = new MockStudentRepository();
+        _repository = repository;
     }
 
     public IEnumerable<Student> GetAllStudents()

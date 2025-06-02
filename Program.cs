@@ -1,12 +1,17 @@
 using StudentProfile.NET.Services;
+using StudentProfile.NET.Data;
 using StudentProfile.NET.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configuração da conexão com o banco de dados
+var connectionString = builder.Configuration.GetConnectionString("StudentDatabase");
 
 // Adiciona serviços ao container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<StudentRepository>(sp => new StudentRepository(connectionString));
 builder.Services.AddSingleton<StudentService>();
 
 // Configuração explícita do Swagger
@@ -75,7 +80,5 @@ app.MapControllers();
 
 // Adiciona uma rota padrão para redirecionar para o Swagger
 app.MapGet("/", () => Results.Redirect("/swagger"));
-
-
 
 app.Run();
