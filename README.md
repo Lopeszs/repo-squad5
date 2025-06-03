@@ -131,7 +131,7 @@ cd ../..
 #### Opção A: Script Automático (Recomendado)
 ```bash
 # Windows
-start-dev.bat
+start start-dev.bat
 ```
 
 #### Opção B: Manual
