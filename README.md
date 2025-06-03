@@ -155,7 +155,7 @@ npm start
 
 ![Diagrama de Arquitetura](images/diagrama_de_arquitetura.jpeg)
 
-## 📑 Diagrama de Arquitetura
+## 📑 Diagrama de Classes
 
 
 ![Diagrama de Classes](images/diagrama_de_classes.jpeg)
