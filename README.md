@@ -153,12 +153,12 @@ npm start
 ## 📊 Diagrama de Arquitetura
 
 
-![Diagrama de Arquitetura](images/diagrama_de_arquitetura.jpeg)
+![Diagrama de Arquitetura](diagramas/diagrama_de_arquitetura.jpeg)
 
 ## 📑 Diagrama de Classes
 
 
-![Diagrama de Classes](images/diagrama_de_classes.jpeg)
+![Diagrama de Classes](diagramas/diagrama_de_classes.jpeg)
 
 ## 🔄 Fluxo de Dados
 
